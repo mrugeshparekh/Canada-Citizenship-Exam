@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import rawBank from "./data/questions.json";
+import rawData from "./data/discover_canada_mcq_500plus.json";
 import type { OptionKey, Question } from "./types";
 
 const TOTAL_QUESTIONS = 20;
@@ -20,7 +20,8 @@ function normalizeOptions(options: any): Record<OptionKey, string> {
   const out: Record<OptionKey, string> = { A: "", B: "", C: "", D: "" };
   if (options && typeof options === "object") {
     (["A", "B", "C", "D"] as OptionKey[]).forEach((k) => {
-      if (options[k]) out[k] = String(options[k]).trim();
+      const val = options[k] ?? options[k.toLowerCase()];
+      if (val) out[k] = String(val).trim();
     });
   }
   return out;
@@ -41,15 +42,17 @@ export default function App() {
   const timerRef = useRef<number | null>(null);
 
   const quiz: Question[] = useMemo(() => {
-    const bank = (rawBank as any[])
-      .filter((q) => q && q.question && q.options && q.answer)
-      .map((q) => ({
-        question_number: Number(q.question_number),
+    const sections = (rawData as any).sections ?? [];
+    const flat = sections.flatMap((s: any) => s.questions ?? []);
+    const bank = flat
+      .filter((q: any) => q && q.question && q.options && q.answer)
+      .map((q: any) => ({
+        question_number: Number(q.id ?? q.question_number),
         question: String(q.question).trim(),
         options: normalizeOptions(q.options),
         answer: String(q.answer).trim().toUpperCase() as OptionKey,
       }))
-      .filter((q) => (["A", "B", "C", "D"] as string[]).includes(q.answer));
+      .filter((q: any) => (["A", "B", "C", "D"] as string[]).includes(q.answer));
 
     return shuffle(bank).slice(0, TOTAL_QUESTIONS);
   }, [attemptKey]);
@@ -121,7 +124,7 @@ export default function App() {
       <div className="container py-4">
         <h1 className="mb-3">Citizenship Practice Exam</h1>
         <div className="alert alert-danger">
-          Could not load questions. Ensure <code>src/data/questions.json</code> exists and has valid entries.
+          Could not load questions. Ensure <code>src/data/discover_canada_mcq_500plus.json</code> exists and has valid entries.
         </div>
       </div>
     );
