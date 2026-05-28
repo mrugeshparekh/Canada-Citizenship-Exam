@@ -27,6 +27,21 @@ function normalizeOptions(options: any): Record<OptionKey, string> {
   return out;
 }
 
+function shuffleQuestionOptions(q: Question): Question {
+  const keys: OptionKey[] = ["A", "B", "C", "D"];
+  const shuffledKeys = shuffle(keys);
+  const newOptions = {} as Record<OptionKey, string>;
+  let newAnswer: OptionKey = q.answer;
+
+  shuffledKeys.forEach((oldKey, idx) => {
+    const newKey = keys[idx];
+    newOptions[newKey] = q.options[oldKey];
+    if (oldKey === q.answer) newAnswer = newKey;
+  });
+
+  return { ...q, options: newOptions, answer: newAnswer };
+}
+
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -54,7 +69,7 @@ export default function App() {
       }))
       .filter((q: any) => (["A", "B", "C", "D"] as string[]).includes(q.answer));
 
-    return shuffle(bank).slice(0, TOTAL_QUESTIONS);
+    return shuffle(bank).slice(0, TOTAL_QUESTIONS).map(shuffleQuestionOptions);
   }, [attemptKey]);
 
   const answeredCount = useMemo(() => Object.keys(selected).length, [selected]);
